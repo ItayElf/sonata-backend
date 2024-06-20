@@ -1,14 +1,19 @@
 import hashlib
+import random
+from string import printable
 from typing import List
 
 from flask import request, jsonify
 from flask_jwt_extended import create_access_token
+import sqlalchemy
 
-from web.base import app
+from web.base import app, database
 from web.api.utils import get_json_keys
-from web.exceptions import SonataUnauthorizedException
+from web.exceptions import SonataException, SonataUnauthorizedException
 from web.models.user import User
 from web.api.result import Result
+
+_SALT_SIZE = 32
 
 
 def _get_user_by_email(email: str) -> User:
@@ -18,8 +23,29 @@ def _get_user_by_email(email: str) -> User:
     raise SonataUnauthorizedException("Invalid Credentials")
 
 
+def _generate_new_salt() -> str:
+    return "".join(random.choices(printable, k=_SALT_SIZE))
+
+
+def _get_hash(password: str, salt: str) -> str:
+    return hashlib.md5(password.encode() + salt.encode()).hexdigest()
+
+
 def _check_password(password: str, salt: str, hashed: str):
-    return hashlib.md5(password.encode() + salt.encode()).hexdigest() == hashed
+    return _get_hash(password, salt) == hashed
+
+
+def _insert_new_user(user: User) -> User:
+    try:
+        database.session.add(user)
+        database.session.commit()
+        return user
+    except sqlalchemy.exc.IntegrityError as e:
+        database.session.rollback()
+        if "users.name" in str(e):
+            raise SonataException(400, "Username already taken") from e
+        raise SonataException(
+            400, "A user with this email already exists") from e
 
 
 @app.route("/api/auth/login", methods=["POST"])
@@ -41,3 +67,21 @@ def auth_login():
 
     access_token = create_access_token(identity=user.email)
     return jsonify(access_token=access_token)
+
+
+@app.route("/api/auth/register", methods=["POST"])
+def auth_register():
+    result: Result[List[str]] = Result.instantiate(
+        lambda: get_json_keys(request, ["email", "name", "password"])
+    )
+    if not result.is_ok:
+        return result.response_value
+    email, name, password = result.value
+    salt = _generate_new_salt()
+    password = _get_hash(password, salt)
+    user = User(email=email, name=name, password_hash=password,
+                salt=salt)  # type: ignore
+    return Result(user, 200) \
+        .bind(_insert_new_user) \
+        .bind(lambda x: create_access_token(x.email)) \
+        .jsonify("access_token")

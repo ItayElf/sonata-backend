@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from typing import Callable, Generic, NamedTuple, TypeVar
+from typing import Callable, Generic, NamedTuple, TypeVar, Union
 
-from flask.typing import ResponseReturnValue, ResponseValue
+from flask import Response, jsonify
+from flask.typing import ResponseReturnValue
 
 from web.exceptions import SonataException
 
@@ -22,6 +23,11 @@ class Result(NamedTuple, Generic[_T]):
     @property
     def response_value(self) -> ResponseReturnValue:
         return self.value, self.code  # type: ignore
+
+    def jsonify(self, key: str) -> Union[ResponseReturnValue, Response]:
+        if not self.is_ok:
+            return self.response_value
+        return jsonify({key: self.value})
 
     def bind(self, func: Callable[[_T], _U]) -> Result[_U]:
         if not self.is_ok:
