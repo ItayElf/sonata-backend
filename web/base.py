@@ -1,4 +1,5 @@
 from datetime import timedelta
+import os
 import pathlib
 from flask_jwt_extended import JWTManager
 import hashids
@@ -16,7 +17,8 @@ app.config["SECRET"] = SECRET
 app.config["JWT_SECRET_KEY"] = JWT_SECRET_KEY
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(days=30)
 
-app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{_DATABASE_LOCATION}"
+app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{
+    os.environ.get('DATABASE_PATH', _DATABASE_LOCATION)}"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 hasher = hashids.Hashids()

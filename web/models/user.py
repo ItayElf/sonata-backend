@@ -17,11 +17,9 @@ class User(database.Model):
     profile_picture_id = database.Column(
         database.Integer, database.ForeignKey('files.id'))
 
+    pieces = database.relationship('Piece', back_populates='user')
     profile_picture = database.relationship(
-        'File', back_populates='users', lazy='dynamic')
-    pieces = database.relationship(
-        'Piece', back_populates='user', lazy='dynamic')
-    tags = database.relationship('Tag', back_populates='user', lazy='dynamic')
+        'File', foreign_keys=[profile_picture_id])
 
     def to_dict(self):
         return {

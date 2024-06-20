@@ -24,10 +24,8 @@ class Piece(database.Model):
         database.Integer, database.ForeignKey('files.id'))
     file_type = database.Column(database.String)
 
-    user = database.relationship(
-        'User', back_populates='pieces', lazy='dynamic')
-    file = database.relationship(
-        'File', back_populates='pieces', lazy='dynamic')
+    user = database.relationship('User', back_populates='pieces')
+    file = database.relationship('File', back_populates='pieces')
 
     def to_dict(self):
         return {

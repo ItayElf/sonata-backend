@@ -1,5 +1,5 @@
 from web.base import database, hasher
-from web.models.piece import Piece
+from web.models import Piece, User, File
 
 
 class Tag(database.Model):
@@ -16,7 +16,9 @@ class Tag(database.Model):
     tag = database.Column(database.Text, nullable=False)
     color = database.Column(database.Text, nullable=False)
 
-    user = database.relationship('User', back_populates='tags', lazy='dynamic')
+    user = database.relationship('User', back_populates='tags')
+    pieces = database.relationship(
+        'Piece', secondary='pieces_tags', back_populates='tags')
 
     def to_dict(self):
         return {
@@ -35,7 +37,8 @@ pieces_tags = database.Table('pieces_tags',
                                  'tag_id', database.Integer, database.ForeignKey('tags.id'))
                              )
 
-Piece.tags = database.relationship('Tag', secondary=pieces_tags, backref=database.backref(  # type: ignore
-    'pieces', lazy='dynamic'), lazy='dynamic')
-Tag.pieces = database.relationship('Piece', secondary=pieces_tags, backref=database.backref(  # type: ignore
-    'tags', lazy='dynamic'), lazy='dynamic')
+Piece.tags = database.relationship(  # type:ignore
+    'Tag', secondary='pieces_tags', back_populates='pieces')
+User.tags = database.relationship('Tag', back_populates='user')  # type:ignore
+File.pieces = database.relationship(  # type:ignore
+    'Piece', back_populates='file')
