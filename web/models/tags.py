@@ -1,3 +1,5 @@
+import hashids
+
 from web.base import database
 from web.models.piece import Piece
 
@@ -20,7 +22,7 @@ class Tag(database.Model):
 
     def to_dict(self):
         return {
-            'id': self.id,
+            'id': hashids.encode(self.id),
             'user_id': self.user_id,
             'tag': self.tag,
             'color': self.color

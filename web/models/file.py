@@ -1,3 +1,5 @@
+import hashids
+
 from web.base import database
 
 
@@ -15,6 +17,6 @@ class File(database.Model):
 
     def to_dict(self):
         return {
-            'id': self.id,
+            'id': hashids.encode(self.id),
             'content': self.content
         }

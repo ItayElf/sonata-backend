@@ -1,4 +1,7 @@
+import hashids
+
 from sqlalchemy.sql import func
+
 from web.base import database
 
 
@@ -24,8 +27,8 @@ class User(database.Model):
 
     def to_dict(self):
         return {
-            'id': self.id,
+            'id': hashids.encode(self.id),
             'name': self.name,
             'joined_at': self.joined_at.isoformat(),
-            'profile_picture_id': self.profile_picture_id
+            'profile_picture_id': hashids.encode(self.profile_picture_id)
         }
