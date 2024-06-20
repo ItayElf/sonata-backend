@@ -1,8 +1,6 @@
-import hashids
-
 from sqlalchemy.sql import func
 
-from web.base import database
+from web.base import database, hasher
 
 
 class User(database.Model):
@@ -27,8 +25,8 @@ class User(database.Model):
 
     def to_dict(self):
         return {
-            'id': hashids.encode(self.id),
+            'id': hasher.encode(self.id),
             'name': self.name,
             'joined_at': self.joined_at.isoformat(),
-            'profile_picture_id': hashids.encode(self.profile_picture_id)
+            'profile_picture_id': hasher.encode(self.profile_picture_id)
         }

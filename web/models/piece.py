@@ -1,8 +1,6 @@
-import hashids
-
 from sqlalchemy.sql import func
 
-from web.base import database
+from web.base import database, hasher
 
 
 class Piece(database.Model):
@@ -33,13 +31,13 @@ class Piece(database.Model):
 
     def to_dict(self):
         return {
-            'id': hashids.encode(self.id),
+            'id': hasher.encode(self.id),
             'name': self.name,
             'description': self.description,
             'instrument': self.instrument,
             'state': self.state,
-            'user_id': hashids.encode(self.user_id),
+            'user_id': hasher.encode(self.user_id),
             'added_at': self.added_at.isoformat(),
-            'file_id': hashids.encode(self.file_id),
+            'file_id': hasher.encode(self.file_id),
             'file_type': self.file_type
         }

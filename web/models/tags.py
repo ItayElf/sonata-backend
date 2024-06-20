@@ -1,6 +1,4 @@
-import hashids
-
-from web.base import database
+from web.base import database, hasher
 from web.models.piece import Piece
 
 
@@ -22,7 +20,7 @@ class Tag(database.Model):
 
     def to_dict(self):
         return {
-            'id': hashids.encode(self.id),
+            'id': hasher.encode(self.id),
             'user_id': self.user_id,
             'tag': self.tag,
             'color': self.color
@@ -37,7 +35,7 @@ pieces_tags = database.Table('pieces_tags',
                                  'tag_id', database.Integer, database.ForeignKey('tags.id'))
                              )
 
-Piece.tags = database.relationship('Tag', secondary=pieces_tags, backref=database.backref(
+Piece.tags = database.relationship('Tag', secondary=pieces_tags, backref=database.backref(  # type: ignore
     'pieces', lazy='dynamic'), lazy='dynamic')
-Tag.pieces = database.relationship('Piece', secondary=pieces_tags, backref=database.backref(
+Tag.pieces = database.relationship('Piece', secondary=pieces_tags, backref=database.backref(  # type: ignore
     'tags', lazy='dynamic'), lazy='dynamic')
