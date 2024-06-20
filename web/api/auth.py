@@ -1,10 +1,10 @@
 import hashlib
 import random
 from string import printable
-from typing import List
+from typing import Any, Dict, List
 
 from flask import request, jsonify
-from flask_jwt_extended import create_access_token
+from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required
 import sqlalchemy
 
 from web.base import app, database
@@ -33,6 +33,14 @@ def _get_hash(password: str, salt: str) -> str:
 
 def _check_password(password: str, salt: str, hashed: str):
     return _get_hash(password, salt) == hashed
+
+
+def _get_full_user_dict(user: User) -> Dict[str, Any]:
+    return {
+        **user.to_dict(),
+        "tags": [tag.to_dict() for tag in user.tags],  # type:ignore
+        "pieces": [piece.to_dict for piece in user.pieces]  # type:ignore
+    }
 
 
 def _insert_new_user(user: User) -> User:
@@ -85,3 +93,12 @@ def auth_register():
         .bind(_insert_new_user) \
         .bind(lambda x: create_access_token(x.email)) \
         .jsonify("access_token")
+
+
+@app.route("/api/auth/current_user")
+@jwt_required()
+def auth_current_user():
+    return Result.instantiate(get_jwt_identity) \
+        .bind(_get_user_by_email) \
+        .bind(_get_full_user_dict) \
+        .jsonify()

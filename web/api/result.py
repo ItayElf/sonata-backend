@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Callable, Generic, NamedTuple, TypeVar, Union
+from typing import Callable, Generic, NamedTuple, Optional, TypeVar, Union
 
 from flask import Response, jsonify
 from flask.typing import ResponseReturnValue
@@ -24,10 +24,12 @@ class Result(NamedTuple, Generic[_T]):
     def response_value(self) -> ResponseReturnValue:
         return self.value, self.code  # type: ignore
 
-    def jsonify(self, key: str) -> Union[ResponseReturnValue, Response]:
+    def jsonify(self, key: Optional[str] = None) -> Union[ResponseReturnValue, Response]:
         if not self.is_ok:
             return self.response_value
-        return jsonify({key: self.value})
+        elif key:
+            return jsonify({key: self.value})
+        return jsonify(self.value)
 
     def bind(self, func: Callable[[_T], _U]) -> Result[_U]:
         if not self.is_ok:

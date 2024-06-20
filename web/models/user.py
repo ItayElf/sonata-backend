@@ -26,5 +26,5 @@ class User(database.Model):
             'id': hasher.encode(self.id),
             'name': self.name,
             'joined_at': self.joined_at.isoformat(),
-            'profile_picture_id': hasher.encode(self.profile_picture_id)
+            'profile_picture_id': hasher.encode(self.profile_picture_id) if self.profile_picture_id else None
         }

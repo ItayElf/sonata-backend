@@ -1,6 +1,8 @@
+from flask_jwt_extended import create_access_token
 import pytest
 
 from web.base import app, database
+from web.models.tags import Tag
 from web.models.user import User
 
 
@@ -28,7 +30,8 @@ def init_database():
         email='user@example.com',
         name="name",
         password_hash='b305cadbb3bce54f3aa59c64fec00dea',
-        salt='salt'
+        salt='salt',
+        tags=[Tag(tag="test", color="red")]  # type: ignore
     )  # type: ignore
     database.session.add(user)
     database.session.commit()
@@ -116,3 +119,17 @@ def test_auth_register_duplicate_username(test_client, init_database):
     data = response.get_data(as_text=True)
     assert response.status_code == 400
     assert 'Username already taken' in data
+
+
+def test_auth_current_user_success(test_client, init_database):
+    access_token = create_access_token(identity='user@example.com')
+    headers = {
+        'Authorization': f'Bearer {access_token}'
+    }
+    response = test_client.get('/api/auth/current_user', headers=headers)
+
+    data = response.get_json()
+    assert response.status_code == 200
+    assert data['name'] == 'name'
+    assert len(data["tags"]) == 1
+    assert len(data["pieces"]) == 0
