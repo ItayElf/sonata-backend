@@ -63,6 +63,8 @@ def test_edit_tag_success(test_client, user, tag, headers):
     assert database.session.get(
         Tag, tag.id).tag == 'new tag name'  # type: ignore
     assert database.session.get(Tag, tag.id).color == 'red'  # type: ignore
+    assert "tag" in response.json
+    assert "color" in response.json
 
 
 def test_edit_tag_not_found(test_client, user, headers):
@@ -120,6 +122,8 @@ def test_add_tag_success(test_client, user, headers):
     t = Tag.query.filter_by(tag='new tag').first()
     assert t is not None
     assert t.color == 'red'
+    assert "tag" in response.json
+    assert "color" in response.json
 
 
 def test_add_tag_duplicate_name(test_client, user, headers):

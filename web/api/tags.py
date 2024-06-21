@@ -21,7 +21,6 @@ def _get_tag_by_id(tag_id: int) -> Tag:
 def _commit_tag_changes():
     try:
         database.session.commit()
-        return ""
     except sqlalchemy.exc.IntegrityError as e:
         database.session.rollback()
         raise SonataAlreadyExistsException(
@@ -36,13 +35,15 @@ def _edit_tag(user: User, new_tag: Tag):
 
     tag.tag = new_tag.tag
     tag.color = new_tag.color
-    return _commit_tag_changes()
+    _commit_tag_changes()
+    return tag
 
 
 def _add_tag(user: User, tag: Tag):
     tag.user_id = user.id
     database.session.add(tag)
-    return _commit_tag_changes()
+    _commit_tag_changes()
+    return tag
 
 
 def _delete_tag(user: User, tag_id: int):
@@ -69,7 +70,9 @@ def tags_edit():
 
     return Result.instantiate(get_jwt_identity) \
         .bind(get_user_by_email) \
-        .bind(lambda x: _edit_tag(x, new_tag))
+        .bind(lambda x: _edit_tag(x, new_tag)) \
+        .bind(lambda x: x.to_dict()) \
+        .jsonify()
 
 
 @app.route("/api/tags/add", methods=["POST"])
@@ -85,7 +88,9 @@ def tags_add():
 
     return Result.instantiate(get_jwt_identity) \
         .bind(get_user_by_email) \
-        .bind(lambda x: _add_tag(x, new_tag))
+        .bind(lambda x: _add_tag(x, new_tag)) \
+        .bind(lambda x: x.to_dict()) \
+        .jsonify()
 
 
 @app.route("/api/tags/delete", methods=["POST"])
