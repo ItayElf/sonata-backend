@@ -23,7 +23,7 @@ class Tag(database.Model):  # type: ignore
     def to_dict(self):
         return {
             'id': hasher.encode(self.id),
-            'user_id': self.user_id,
+            'user_id': hasher.encode(self.user_id),
             'tag': self.tag,
             'color': self.color
         }

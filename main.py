@@ -5,7 +5,7 @@ def main():
     with app.app_context():
         database.create_all()
 
-    app.run(host="0.0.0.0")
+    app.run(host="0.0.0.0", debug=True)
 
 
 if __name__ == "__main__":
