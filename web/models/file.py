@@ -1,7 +1,7 @@
 from web.base import database, hasher
 
 
-class File(database.Model):
+class File(database.Model):  # type: ignore
     __tablename__ = 'files'
 
     id = database.Column(database.Integer, primary_key=True,

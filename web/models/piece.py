@@ -3,7 +3,7 @@ from sqlalchemy.sql import func
 from web.base import database, hasher
 
 
-class Piece(database.Model):
+class Piece(database.Model):  # type: ignore
     __tablename__ = 'pieces'
     __table_args__ = (
         database.UniqueConstraint(

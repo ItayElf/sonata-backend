@@ -2,7 +2,7 @@ from web.base import database, hasher
 from web.models import Piece, User, File
 
 
-class Tag(database.Model):
+class Tag(database.Model):  # type: ignore
     __tablename__ = 'tags'
     __table_args__ = (
         database.UniqueConstraint(

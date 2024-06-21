@@ -27,7 +27,7 @@ class Result(NamedTuple, Generic[_T]):
     def jsonify(self, key: Optional[str] = None) -> Union[ResponseReturnValue, Response]:
         if not self.is_ok:
             return self.response_value
-        elif key:
+        if key:
             return jsonify({key: self.value})
         return jsonify(self.value)
 
@@ -45,4 +45,4 @@ class Result(NamedTuple, Generic[_T]):
         try:
             return cls(func(), 200)
         except SonataException as e:
-            return cls(e.error_message, e.code)
+            return cls(e.error_message, e.code)  # type: ignore

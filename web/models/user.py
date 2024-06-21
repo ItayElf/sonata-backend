@@ -3,7 +3,7 @@ from sqlalchemy.sql import func
 from web.base import database, hasher
 
 
-class User(database.Model):
+class User(database.Model):  # type: ignore
     __tablename__ = 'users'
 
     id = database.Column(database.Integer, primary_key=True,
@@ -26,5 +26,5 @@ class User(database.Model):
             'id': hasher.encode(self.id),
             'name': self.name,
             'joined_at': self.joined_at.isoformat(),
-            'profile_picture_id': hasher.encode(self.profile_picture_id) if self.profile_picture_id else None
+            'profile_picture_id': hasher.encode(self.profile_picture_id) if self.profile_picture_id else None  # pylint: disable=line-too-long
         }
