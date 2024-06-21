@@ -18,20 +18,31 @@ def _get_tag_by_id(tag_id: int) -> Tag:
     raise SonataNotFoundException(f"Tag with ID {tag_id} not found")
 
 
-def _edit_tag(user: User, new_tag: Tag):
-    tag = _get_tag_by_id(new_tag.id)
-    if tag.user_id != user.id:
-        raise SonataNotFoundException(
-            f"Tag with ID {new_tag.id} not found for this user")
+def _commit_tag_changes():
     try:
-        tag.tag = new_tag.tag
-        tag.color = new_tag.color
         database.session.commit()
         return ""
     except sqlalchemy.exc.IntegrityError as e:
         database.session.rollback()
         raise SonataAlreadyExistsException(
             "A tag with this name already exists!") from e
+
+
+def _edit_tag(user: User, new_tag: Tag):
+    tag = _get_tag_by_id(new_tag.id)
+    if tag.user_id != user.id:
+        raise SonataNotFoundException(
+            f"Tag with ID {new_tag.id} not found for this user")
+
+    tag.tag = new_tag.tag
+    tag.color = new_tag.color
+    return _commit_tag_changes()
+
+
+def _add_tag(user: User, tag: Tag):
+    tag.user_id = user.id
+    database.session.add(tag)
+    return _commit_tag_changes()
 
 
 @app.route("/api/tags/edit", methods=["POST"])
@@ -49,3 +60,19 @@ def tags_edit():
     return Result.instantiate(get_jwt_identity) \
         .bind(get_user_by_email) \
         .bind(lambda x: _edit_tag(x, new_tag))
+
+
+@app.route("/api/tags/add", methods=["POST"])
+@jwt_required()
+def tags_add():
+    result: Result[List[str]] = Result.instantiate(
+        lambda: get_json_keys(request, ["tag", "color"])
+    )
+    if not result.is_ok:
+        return result
+    name, color = result.value
+    new_tag = Tag(tag=name, color=color)  # type: ignore
+
+    return Result.instantiate(get_jwt_identity) \
+        .bind(get_user_by_email) \
+        .bind(lambda x: _add_tag(x, new_tag))

@@ -109,3 +109,29 @@ def test_edit_tag_duplicate_name(test_client, user, tag, headers):
     assert response.status_code == 400
     assert response.get_data(
         as_text=True) == "A tag with this name already exists!"
+
+
+def test_add_tag_success(test_client, user, headers):
+    response = test_client.post('/api/tags/add', json={
+        'tag': 'new tag',
+        'color': 'red'
+    }, headers=headers)
+    assert response.status_code == 200
+    t = Tag.query.filter_by(tag='new tag').first()
+    assert t is not None
+    assert t.color == 'red'
+
+
+def test_add_tag_duplicate_name(test_client, user, headers):
+    t = Tag(user_id=user.id, tag="existing tag",
+            color="blue")  # type: ignore
+    database.session.add(t)
+    database.session.commit()
+
+    response = test_client.post('/api/tags/add', json={
+        'tag': 'existing tag',  # Duplicate tag name
+        'color': 'red'
+    }, headers=headers)
+    assert response.status_code == 400
+    assert response.get_data(
+        as_text=True) == "A tag with this name already exists!"
