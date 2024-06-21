@@ -10,10 +10,19 @@ import sqlalchemy
 from web.base import app, database
 from web.api.utils import get_json_keys
 from web.exceptions import SonataException, SonataUnauthorizedException
+from web.models.tags import Tag
 from web.models.user import User
 from web.api.result import Result
 
 _SALT_SIZE = 32
+
+
+def _get_base_tags():
+    return [
+        Tag(tag="easy", color="rgba(0,0,0,0)"),  # type: ignore
+        Tag(tag="medium", color="rgba(0,0,0,0)"),  # type: ignore
+        Tag(tag="hard", color="rgba(0,0,0,0)")  # type: ignore
+    ]
 
 
 def _get_user_by_email(email: str) -> User:
@@ -88,7 +97,7 @@ def auth_register():
     salt = _generate_new_salt()
     password = _get_hash(password, salt)
     user = User(email=email, name=name, password_hash=password,
-                salt=salt)  # type: ignore
+                salt=salt, tags=_get_base_tags())  # type: ignore
     return Result(user, 200) \
         .bind(_insert_new_user) \
         .bind(lambda x: create_access_token(x.email)) \
