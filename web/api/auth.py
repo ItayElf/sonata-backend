@@ -25,7 +25,7 @@ def _get_base_tags():
     ]
 
 
-def _get_user_by_email(email: str) -> User:
+def get_user_by_email(email: str) -> User:
     user = User.query.filter_by(email=email).first()
     if user:
         return user
@@ -74,7 +74,7 @@ def auth_login():
         return result.response_value
 
     password = result.value[1]
-    user_result = result.bind(lambda x: x[0]).bind(_get_user_by_email)
+    user_result = result.bind(lambda x: x[0]).bind(get_user_by_email)
     if not user_result.is_ok:
         return user_result.response_value
 
@@ -108,6 +108,6 @@ def auth_register():
 @jwt_required()
 def auth_current_user():
     return Result.instantiate(get_jwt_identity) \
-        .bind(_get_user_by_email) \
+        .bind(get_user_by_email) \
         .bind(_get_full_user_dict) \
         .jsonify()
