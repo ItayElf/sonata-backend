@@ -45,6 +45,16 @@ def _add_tag(user: User, tag: Tag):
     return _commit_tag_changes()
 
 
+def _delete_tag(user: User, tag_id: int):
+    tag = _get_tag_by_id(tag_id)
+    if tag.user_id != user.id:
+        raise SonataNotFoundException(
+            f"Tag with ID {tag_id} not found for this user")
+    database.session.delete(tag)
+    database.session.commit()
+    return ""
+
+
 @app.route("/api/tags/edit", methods=["POST"])
 @jwt_required()
 def tags_edit():
@@ -76,3 +86,19 @@ def tags_add():
     return Result.instantiate(get_jwt_identity) \
         .bind(get_user_by_email) \
         .bind(lambda x: _add_tag(x, new_tag))
+
+
+@app.route("/api/tags/delete", methods=["POST"])
+@jwt_required()
+def tags_delete():
+    result: Result[List[str]] = Result.instantiate(
+        lambda: get_json_keys(request, ["id"])
+    )
+    if not result.is_ok:
+        return result
+    tag_id_hashed, = result.value
+    tag_id, = hasher.decode(tag_id_hashed)  # type: ignore
+
+    return Result.instantiate(get_jwt_identity) \
+        .bind(get_user_by_email) \
+        .bind(lambda x: _delete_tag(x, tag_id))

@@ -135,3 +135,37 @@ def test_add_tag_duplicate_name(test_client, user, headers):
     assert response.status_code == 400
     assert response.get_data(
         as_text=True) == "A tag with this name already exists!"
+
+
+def test_delete_tag_success(test_client, user, tag, headers):
+    response = test_client.post('/api/tags/delete', json={
+        'id': hasher.encode(tag.id)
+    }, headers=headers)
+    assert response.status_code == 200
+    assert database.session.get(Tag, tag.id) is None
+
+
+def test_delete_tag_not_found(test_client, user, headers):
+    response = test_client.post('/api/tags/delete', json={
+        'id': hasher.encode(999)  # Non-existing tag ID
+    }, headers=headers)
+    assert response.status_code == 404
+    assert response.get_data(as_text=True) == "Tag with ID 999 not found"
+
+
+def test_delete_tag_user_not_authorized(test_client, user, headers):
+    other_user = User(email="other@example.com", name="otheruser",
+                      password_hash="hashed_password", salt="salt")  # type: ignore
+    database.session.add(other_user)
+    database.session.commit()
+    other_tag = Tag(user_id=other_user.id, tag="other tag",
+                    color="green")  # type: ignore
+    database.session.add(other_tag)
+    database.session.commit()
+
+    response = test_client.post('/api/tags/delete', json={
+        'id': hasher.encode(other_tag.id)
+    }, headers=headers)
+    assert response.status_code == 404
+    assert response.get_data(as_text=True) == "Tag with ID " \
+        f"{other_tag.id} not found for this user"
