@@ -48,7 +48,7 @@ def _get_full_user_dict(user: User) -> Dict[str, Any]:
     return {
         **user.to_dict(),
         "tags": [tag.to_dict() for tag in user.tags],  # type:ignore
-        "pieces": [piece.to_dict for piece in user.pieces]  # type:ignore
+        "pieces": [piece.to_dict() for piece in user.pieces]  # type:ignore
     }
 
 
