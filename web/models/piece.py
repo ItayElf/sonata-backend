@@ -37,5 +37,6 @@ class Piece(database.Model):  # type: ignore
             'user_id': hasher.encode(self.user_id),
             'added_at': self.added_at.isoformat(),
             'file_id': hasher.encode(self.file_id),
-            'file_type': self.file_type
+            'file_type': self.file_type,
+            "tags": [tag.to_dict() for tag in self.tags]  # type: ignore,
         }
