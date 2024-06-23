@@ -11,7 +11,7 @@ from web.models.tags import Tag
 from web.models.user import User
 
 
-def _get_tag_by_id(tag_id: int) -> Tag:
+def get_tag_by_id(tag_id: int) -> Tag:
     tag = Tag.query.filter_by(id=tag_id).first()
     if tag:
         return tag
@@ -28,7 +28,7 @@ def _commit_tag_changes():
 
 
 def _edit_tag(user: User, new_tag: Tag):
-    tag = _get_tag_by_id(new_tag.id)
+    tag = get_tag_by_id(new_tag.id)
     if tag.user_id != user.id:
         raise SonataNotFoundException(
             f"Tag with ID {new_tag.id} not found for this user")
@@ -47,7 +47,7 @@ def _add_tag(user: User, tag: Tag):
 
 
 def _delete_tag(user: User, tag_id: int):
-    tag = _get_tag_by_id(tag_id)
+    tag = get_tag_by_id(tag_id)
     if tag.user_id != user.id:
         raise SonataNotFoundException(
             f"Tag with ID {tag_id} not found for this user")
