@@ -17,7 +17,7 @@ def _decode_tags(tag_ids_str: List[str]) -> List[int]:
     return [hasher.decode(tag)[0] for tag in tag_ids_str]  # type: ignore
 
 
-def _get_piece_by_id(piece_id: int):
+def get_piece_by_id(piece_id: int):
     piece = Piece.query.filter_by(id=piece_id).first()
     if piece:
         return piece
@@ -45,7 +45,7 @@ def _commit_piece_changes():
 
 
 def _edit_piece(user: User, new_piece: Piece):
-    piece: Piece = _get_piece_by_id(new_piece.id)
+    piece: Piece = get_piece_by_id(new_piece.id)
     if piece.user_id != user.id:
         raise SonataNotFoundException(
             f"Piece with ID {piece.id} not found for this user")
@@ -66,7 +66,7 @@ def _add_piece(piece: Piece):
 
 
 def _delete_piece(user: User, piece_id: int):
-    piece: Piece = _get_piece_by_id(piece_id)
+    piece: Piece = get_piece_by_id(piece_id)
     if piece.user_id != user.id:
         raise SonataNotFoundException(
             f"Piece with ID {piece.id} not found for this user")
