@@ -169,3 +169,37 @@ def test_add_piece_duplicate(test_client, user, headers, tags, piece):
     assert response.status_code == 400
     assert response.get_data(
         as_text=True) == "A piece with this name already exists for this instrument!"
+
+
+def test_delete_piece_success(test_client, piece, headers):
+    response = test_client.post('/api/pieces/delete', json={
+        'id': hasher.encode(piece.id)
+    }, headers=headers)
+    assert response.status_code == 200
+    assert database.session.get(Piece, piece.id) is None
+
+
+def test_delete_piece_not_found(test_client, headers):
+    response = test_client.post('/api/pieces/delete', json={
+        'id': hasher.encode(999)
+    }, headers=headers)
+    assert response.status_code == 404
+    assert response.get_data(as_text=True) == "Piece with ID 999 not found"
+
+
+def test_delete_piece_unauthorized(test_client, piece):
+    other_user = User(email="other@example.com", name="otheruser",
+                      password_hash="hashed_password", salt="salt")  # type: ignore
+    database.session.add(other_user)
+    database.session.commit()
+
+    access_token = create_access_token(identity=other_user.email)
+    response = test_client.post('/api/pieces/delete', json={
+        'id': hasher.encode(piece.id)
+    }, headers={
+        'Authorization': f'Bearer {access_token}'
+    })
+
+    assert response.status_code == 404
+    assert response.get_data(as_text=True) == f"Piece with ID {
+        piece.id} not found for this user"

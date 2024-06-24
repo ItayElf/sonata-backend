@@ -65,6 +65,16 @@ def _add_piece(piece: Piece):
     return piece
 
 
+def _delete_piece(user: User, piece_id: int):
+    piece: Piece = _get_piece_by_id(piece_id)
+    if piece.user_id != user.id:
+        raise SonataNotFoundException(
+            f"Piece with ID {piece.id} not found for this user")
+    database.session.delete(piece)
+    database.session.commit()
+    return ""
+
+
 @app.route("/api/pieces/edit", methods=["POST"])
 @jwt_required()
 def pieces_edit():
@@ -128,3 +138,21 @@ def pieces_add():
     return Result.instantiate(lambda: _add_piece(piece)) \
         .bind(lambda x: x.to_dict()) \
         .jsonify()
+
+
+@app.route("/api/pieces/delete", methods=["POST"])
+@jwt_required()
+def pieces_delete():
+    result: Result[int] = Result.instantiate(
+        lambda: get_json_keys(request, ["id"])
+    ) \
+        .bind(lambda x: x[0]) \
+        .bind(hasher.decode) \
+        .bind(lambda x: x[0])  # type: ignore
+    if not result.is_ok:
+        return result
+
+    piece_id = result.value
+    return Result.instantiate(get_jwt_identity) \
+        .bind(get_user_by_email) \
+        .bind(lambda x: _delete_piece(x, piece_id))
