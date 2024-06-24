@@ -7,6 +7,7 @@ class File(database.Model):  # type: ignore
     id = database.Column(database.Integer, primary_key=True,
                          autoincrement=True, nullable=False)
     content = database.Column(database.LargeBinary, nullable=False)
+    file_type = database.Column(database.String, nullable=False)
 
     def to_dict(self):
         return {

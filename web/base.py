@@ -6,6 +6,7 @@ import hashids
 
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
+from flask_caching import Cache
 
 from web.hidden import SECRET, JWT_SECRET_KEY
 
@@ -21,6 +22,9 @@ app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{
     os.environ.get('DATABASE_PATH', _DATABASE_LOCATION)}"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
+app.config['CACHE_TYPE'] = 'simple'
+
+cache = Cache(app)
 hasher = hashids.Hashids()
 database = SQLAlchemy(app, session_options={"autoflush": False})
 jwt = JWTManager(app)

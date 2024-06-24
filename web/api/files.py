@@ -1,5 +1,6 @@
+import io
 from typing import List
-from flask import request
+from flask import request, send_file
 from flask_jwt_extended import get_jwt_identity, jwt_required
 from werkzeug.datastructures.file_storage import FileStorage
 import sqlalchemy
@@ -8,9 +9,16 @@ from web.api.auth import get_user_by_email
 from web.api.pieces import get_piece_by_id
 from web.api.result import Result
 from web.api.utils import get_data_keys, get_json_keys
-from web.base import app, database, hasher
+from web.base import app, database, hasher, cache
 from web.exceptions import SonataAlreadyExistsException, SonataException, SonataNotFoundException
 from web.models import User, Piece, File
+
+
+def _get_file_by_id(file_id: int) -> File:
+    file = File.query.filter_by(id=file_id).first()
+    if file:
+        return file
+    raise SonataNotFoundException(f"File with ID {file_id} not found")
 
 
 def _commit_piece_changes():
@@ -23,7 +31,8 @@ def _commit_piece_changes():
 
 
 def _upload_file(file: FileStorage) -> File:
-    new_file = File(content=file.read())  # type: ignore
+    new_file = File(content=file.read(),
+                    file_type=file.content_type)  # type: ignore
     database.session.add(new_file)
     database.session.commit()
     return new_file
@@ -107,3 +116,22 @@ def files_upload_file():
         .bind(lambda x: _edit_piece(user, x)) \
         .bind(lambda x: x.to_dict()) \
         .jsonify()
+
+
+@app.route("/api/files/file/<string:hashed_id>", methods=["GET"])
+def get_file(hashed_id: str):
+    try:
+        file_id, = hasher.decode(hashed_id)  # type: ignore
+        file_response = cache.get(f"file_{file_id}")
+        if file_response is None:
+            file = _get_file_by_id(file_id)
+            file_response = send_file(
+                io.BytesIO(file.content.encode()),
+                as_attachment=False,
+                mimetype=file.file_type,
+            )
+            cache.set(f"file_{file_id}", file_response)
+
+        return file_response
+    except SonataException as e:
+        return e.error_message, e.code
