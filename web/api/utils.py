@@ -11,3 +11,11 @@ def get_json_keys(request: Request, keys: List[str]) -> List[Any]:
         return [data[key] for key in keys]
     except KeyError as e:
         raise SonataMissingParametersException("Missing fields") from e
+
+
+def get_data_keys(request: Request, keys: List[str]) -> List[Any]:
+    data = request.form
+    try:
+        return [data[key] for key in keys]
+    except KeyError as e:
+        raise SonataMissingParametersException("Missing fields") from e

@@ -1,3 +1,4 @@
+import io
 from flask_jwt_extended import create_access_token
 import pytest
 from web.base import app, database, hasher
@@ -95,6 +96,78 @@ def test_upload_link_file_unauthorized(test_client, piece):
     }, headers={
         'Authorization': f'Bearer {access_token}'
     })
+    assert response.status_code == 404
+    assert response.get_data(as_text=True) == f"Piece with ID {
+        piece.id} not found for this user"
+
+
+def test_files_upload_file_success(test_client, headers, piece):
+    data = {
+        "id": hasher.encode(piece.id)
+    }
+    file_data = {
+        'file': (io.BytesIO(b"some initial text data"), "test.txt")
+    }
+    response = test_client.post(
+        '/api/files/upload_file',
+        headers=headers,
+        data={**data, **file_data},
+    )
+    assert response.status_code == 200
+    assert database.session.get(
+        Piece, piece.id).file_type == 'text/plain'  # type: ignore
+    assert database.session.get(
+        Piece, piece.id).file_id is not None  # type: ignore
+
+
+def test_files_upload_file_missing_file(test_client, headers, piece):
+    data = {
+        "id": hasher.encode(piece.id)
+    }
+    response = test_client.post(
+        '/api/files/upload_file',
+        headers=headers,
+        data={**data},
+    )
+    assert response.status_code == 400
+
+
+def test_files_upload_file_too_large(test_client, headers, piece):
+    file_size = (30*1024*1024+1)
+    data = {
+        "id": hasher.encode(piece.id)
+    }
+    file_data = {
+        'file': (io.BytesIO(b"A" * file_size), "test.txt")
+    }
+    response = test_client.post(
+        '/api/files/upload_file',
+        headers=headers,
+        data={**data, **file_data},
+    )
+    assert response.status_code == 400
+    assert response.get_data(
+        as_text=True) == f"File too large! ({file_size / 1024 / 1024}MB > 30MB)"
+
+
+def test_files_upload_file_file_unauthorized(test_client, piece):
+    other_user = User(email="other@example.com", name="otheruser",
+                      password_hash="hashed_password", salt="salt")  # type: ignore
+    database.session.add(other_user)
+    database.session.commit()
+
+    access_token = create_access_token(identity=other_user.email)
+    data = {
+        "id": hasher.encode(piece.id)
+    }
+    file_data = {
+        'file': (io.BytesIO(b"some initial text data"), "test.txt")
+    }
+    response = test_client.post(
+        '/api/files/upload_file',
+        headers={'Authorization': f'Bearer {access_token}'},
+        data={**data, **file_data},
+    )
     assert response.status_code == 404
     assert response.get_data(as_text=True) == f"Piece with ID {
         piece.id} not found for this user"
