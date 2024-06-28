@@ -45,6 +45,9 @@ def _edit_piece(user: User, new_piece: Piece):
             f"Piece with ID {piece.id} not found for this user")
 
     piece.file_type = new_piece.file_type
+    if new_piece.file_id == None and piece.file_id != None:
+        file = piece.file
+        database.session.delete(file)
     piece.file_id = new_piece.file_id
     _commit_piece_changes()
     return piece
