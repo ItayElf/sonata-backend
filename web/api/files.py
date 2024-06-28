@@ -101,9 +101,10 @@ def files_upload_file():
     result: Result[List[str]] = Result.instantiate(
         lambda: get_data_keys(request, ["id"])
     )
+    if not request.files or not result.is_ok:
+        return "Missing fields", 400
+    print(f"{request.files=}")
     file = request.files["file"]
-    if not file.filename or not result.is_ok:
-        return result
     piece_id_hash, = result.value
     piece_id, = hasher.decode(piece_id_hash)  # type: ignore
 
