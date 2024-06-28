@@ -45,9 +45,10 @@ def _edit_piece(user: User, new_piece: Piece):
             f"Piece with ID {piece.id} not found for this user")
 
     piece.file_type = new_piece.file_type
-    if new_piece.file_id == None and piece.file_id != None:
+    if new_piece.file_id is None and piece.file_id is not None:
         file = piece.file
         database.session.delete(file)
+        cache.delete(f"file_{file.id}")
     piece.file_id = new_piece.file_id
     _commit_piece_changes()
     return piece
@@ -128,8 +129,10 @@ def get_file(hashed_id: str):
         file_response = cache.get(f"file_{file_id}")
         if file_response is None:
             file = _get_file_by_id(file_id)
+            if file.content is str:
+                file.content = file.content.encode()
             file_response = send_file(
-                io.BytesIO(file.content.encode()),
+                io.BytesIO(file.content),
                 as_attachment=False,
                 mimetype=file.file_type,
             )
